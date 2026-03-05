@@ -1,5 +1,7 @@
 // lib/api.ts
-export const API_BASE_URL = "http://localhost:8080";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://json-backend-staging-9413d4381c05.herokuapp.com";
 
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token =
