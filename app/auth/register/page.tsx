@@ -33,7 +33,7 @@ export default function RegisterPage() {
       } else {
         setError(data.message || "Registration failed. Email might already be registered.");
       }
-    } catch (err) {
+    } catch {
       setError("Server error occurred. Please try again.");
     }
   };
