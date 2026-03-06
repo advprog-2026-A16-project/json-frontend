@@ -1,7 +1,9 @@
 // lib/api.ts
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://json-backend-staging-9413d4381c05.herokuapp.com";
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:8080"
+    : "https://json-backend-staging-9413d4381c05.herokuapp.com");
 
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token =
@@ -16,6 +18,16 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     },
   });
 
-  const data = await response.json();
+  const contentType = response.headers.get("content-type") ?? "";
+  let data: unknown = null;
+
+  if (contentType.includes("application/json")) {
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+  }
+
   return { response, data };
 };
