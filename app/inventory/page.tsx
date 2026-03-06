@@ -38,6 +38,13 @@ const emptyForm: ProductForm = {
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+const getMessage = (value: unknown): string => {
+  if (typeof value !== "object" || value === null || !("message" in value)) {
+    return "";
+  }
+  return String((value as { message?: unknown }).message ?? "");
+};
+
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,10 +150,7 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        const message =
-          typeof data === "object" && data !== null && "message" in data
-            ? String((data as { message?: unknown }).message ?? "")
-            : "";
+        const message = getMessage(data);
         setFormError(message || `Gagal menyimpan produk (${response.status}).`);
       } else {
         resetForm();
@@ -180,7 +184,7 @@ export default function Home() {
         method: "DELETE",
       });
       if (!response.ok) {
-        setError(data?.message ?? "Gagal menghapus produk.");
+        setError(getMessage(data) || "Gagal menghapus produk.");
       } else {
         await fetchProducts();
       }

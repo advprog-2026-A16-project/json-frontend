@@ -5,7 +5,10 @@ export const API_BASE_URL =
     ? "http://localhost:8080"
     : "https://json-backend-staging-9413d4381c05.herokuapp.com");
 
-export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
+export const apiFetch = async <T = unknown>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<{ response: Response; data: T | null }> => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -19,11 +22,11 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   });
 
   const contentType = response.headers.get("content-type") ?? "";
-  let data: unknown = null;
+  let data: T | null = null;
 
   if (contentType.includes("application/json")) {
     try {
-      data = await response.json();
+      data = (await response.json()) as T;
     } catch {
       data = null;
     }
