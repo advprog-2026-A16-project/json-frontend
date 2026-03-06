@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
 
+type AuthResponse = {
+  token?: string;
+  message?: string;
+};
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,16 +21,16 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { response, data } = await apiFetch("/api/auth/login", {
+      const { response, data } = await apiFetch<AuthResponse>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
 
-      if (response.ok) {
+      if (response.ok && data?.token) {
         localStorage.setItem("token", data.token);
         router.push("/dashboard");
       } else {
-        setError(data.message || "Login failed. Please check your credentials.");
+        setError(data?.message || "Login failed. Please check your credentials.");
       }
     } catch {
       setError("Server error occurred. Please try again.");

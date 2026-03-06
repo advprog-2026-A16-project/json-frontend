@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
 
+type AuthResponse = {
+  token?: string;
+  message?: string;
+};
+
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,16 +27,16 @@ export default function RegisterPage() {
     }
 
     try {
-      const { response, data } = await apiFetch("/api/auth/register", {
+      const { response, data } = await apiFetch<AuthResponse>("/api/auth/register", {
         method: "POST",
         body: JSON.stringify({ email, password, confirmPassword }),
       });
 
-      if (response.ok) {
+      if (response.ok && data?.token) {
         localStorage.setItem("token", data.token);
         router.push("/dashboard");
       } else {
-        setError(data.message || "Registration failed. Email might already be registered.");
+        setError(data?.message || "Registration failed. Email might already be registered.");
       }
     } catch {
       setError("Server error occurred. Please try again.");
