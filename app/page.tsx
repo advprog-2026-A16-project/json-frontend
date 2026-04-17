@@ -10,22 +10,33 @@ export default function Home() {
         <h1 className="mb-3 text-4xl font-bold tracking-tight">Frontend Staging</h1>
         <p className="mb-8 max-w-2xl text-sm text-gray-600">
           Halaman ini dipakai sebagai entry point pengujian integrasi frontend-backend untuk milestone 25%.
-          Gunakan menu di bawah untuk login/register atau langsung coba inventory module.
+          Gunakan menu di bawah untuk login/register atau langsung coba inventory & order module.
         </p>
 
-        <div className="grid w-full max-w-2xl gap-3 sm:grid-cols-3">
+        {/* Ubah grid jadi sm:grid-cols-2 biar simetris 2x2 */}
+        <div className="grid w-full max-w-2xl gap-3 sm:grid-cols-2">
           <Link
             href="/inventory"
             className="rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700"
           >
             Buka Inventory
           </Link>
+
+          {/* Tombol Baru: Buka Orders */}
+          <Link
+            href="/order"
+            className="rounded-lg bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-700"
+          >
+            Buka Orders
+          </Link>
+
           <Link
             href="/auth/login"
             className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium hover:bg-gray-100"
           >
             Login
           </Link>
+
           <Link
             href="/auth/register"
             className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium hover:bg-gray-100"
