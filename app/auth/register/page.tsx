@@ -1,21 +1,27 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-
-type AuthResponse = {
-  token?: string;
-  message?: string;
-};
+import { useRouter } from "next/navigation";
+import { authApi } from "@/lib/api";
+import { setSessionFromAuthResponse } from "@/lib/auth/session";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const router = useRouter();
+  const { isAuthenticated, isHydrated, refresh } = useAuth();
+
+  useEffect(() => {
+    if (isHydrated && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isAuthenticated, isHydrated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,20 +32,24 @@ export default function RegisterPage() {
       return;
     }
 
-    try {
-      const { response, data } = await apiFetch<AuthResponse>("/api/auth/register", {
-        method: "POST",
-        body: JSON.stringify({ email, password, confirmPassword }),
-      });
+    setIsSubmitting(true);
 
-      if (response.ok && data?.token) {
-        localStorage.setItem("token", data.token);
-        router.push("/dashboard");
-      } else {
-        setError(data?.message || "Registration failed. Email might already be registered.");
+    try {
+      const payload = await authApi.register({ email, password, confirmPassword });
+
+      if (!payload?.token) {
+        setError(payload?.message || "Registration failed. Email might already be registered.");
+        return;
       }
-    } catch {
-      setError("Server error occurred. Please try again.");
+
+      setSessionFromAuthResponse(payload);
+      refresh();
+      router.push("/dashboard");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Server error occurred. Please try again.";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -47,10 +57,8 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
         <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">Register</h2>
-        
-        {error && (
-          <div className="mb-4 rounded bg-red-100 p-3 text-sm text-red-700">{error}</div>
-        )}
+
+        {error && <div className="mb-4 rounded bg-red-100 p-3 text-sm text-red-700">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -88,9 +96,10 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            className="w-full rounded-md bg-green-600 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            disabled={isSubmitting}
+            className="w-full rounded-md bg-green-600 py-2 text-white hover:bg-green-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
-            Register
+            {isSubmitting ? "Registering..." : "Register"}
           </button>
         </form>
 

@@ -2,18 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { apiFetch } from "@/lib/api";
-
-type Product = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  stock: number;
-  originCountry: string;
-  purchaseDate?: string;
-  jastiperId?: string;
-};
+import { inventoryApi } from "@/lib/api";
+import type { Product } from "@/lib/api/inventory";
+import { RoleGate } from "@/components/auth/RoleGate";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 type ProductForm = {
   name: string;
@@ -38,14 +30,7 @@ const emptyForm: ProductForm = {
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const getMessage = (value: unknown): string => {
-  if (typeof value !== "object" || value === null || !("message" in value)) {
-    return "";
-  }
-  return String((value as { message?: unknown }).message ?? "");
-};
-
-export default function Home() {
+export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -54,25 +39,20 @@ export default function Home() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [formError, setFormError] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  useEffect(() => {
-    setIsLoggedIn(Boolean(localStorage.getItem("token")));
-  }, []);
+  const { isAuthenticated, hasRole } = useAuth();
+  const canManageProducts = hasRole("JASTIPER", "ADMIN");
 
   const fetchProducts = async () => {
     setLoading(true);
     setError("");
     try {
-      const { response, data } = await apiFetch("/api/products");
-      if (!response.ok) {
-        setError(`Gagal mengambil data produk (${response.status}).`);
-        setProducts([]);
-      } else {
-        setProducts(Array.isArray(data) ? data : []);
-      }
-    } catch {
-      setError("Tidak dapat terhubung ke backend.");
+      const data = await inventoryApi.list();
+      setProducts(Array.isArray(data) ? data : []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Cannot connect to backend.";
+      setError(message);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -133,6 +113,11 @@ export default function Home() {
     event.preventDefault();
     setFormError("");
 
+    if (!canManageProducts) {
+      setFormError("Only Jastiper/Admin can manage products.");
+      return;
+    }
+
     const validationError = validateForm();
     if (validationError) {
       setFormError(validationError);
@@ -140,24 +125,19 @@ export default function Home() {
     }
 
     setSubmitting(true);
-    const endpoint = editingId ? `/api/products/${editingId}` : "/api/products";
-    const method = editingId ? "PUT" : "POST";
 
     try {
-      const { response, data } = await apiFetch(endpoint, {
-        method,
-        body: JSON.stringify(buildPayload()),
-      });
-
-      if (!response.ok) {
-        const message = getMessage(data);
-        setFormError(message || `Gagal menyimpan produk (${response.status}).`);
+      if (editingId) {
+        await inventoryApi.update(editingId, buildPayload());
       } else {
-        resetForm();
-        await fetchProducts();
+        await inventoryApi.create(buildPayload());
       }
-    } catch {
-      setFormError("Terjadi error saat menyimpan produk.");
+
+      resetForm();
+      await fetchProducts();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Terjadi error saat menyimpan produk.";
+      setFormError(message);
     } finally {
       setSubmitting(false);
     }
@@ -178,18 +158,15 @@ export default function Home() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!canManageProducts) return;
     if (!confirm("Yakin hapus produk ini?")) return;
+
     try {
-      const { response, data } = await apiFetch(`/api/products/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        setError(getMessage(data) || "Gagal menghapus produk.");
-      } else {
-        await fetchProducts();
-      }
-    } catch {
-      setError("Terjadi error saat menghapus produk.");
+      await inventoryApi.delete(id);
+      await fetchProducts();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Terjadi error saat menghapus produk.";
+      setError(message);
     }
   };
 
@@ -200,23 +177,25 @@ export default function Home() {
           <div>
             <h1 className="text-2xl font-bold">JSON Inventory</h1>
             <p className="text-sm text-gray-500">
-              {isLoggedIn
-                ? "Mode Jastiper: CRUD aktif"
-                : "Mode guest: read-only"}
+              {!isAuthenticated
+                ? "Mode guest: read-only"
+                : canManageProducts
+                  ? "Mode manager: CRUD aktif"
+                  : "Mode authenticated: read-only"}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/auth/login"
+              href="/dashboard"
               className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-100"
             >
-              Login
+              Dashboard
             </Link>
             <Link
-              href="/auth/register"
+              href="/auth/login"
               className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
-              Register
+              Login
             </Link>
           </div>
         </div>
@@ -233,19 +212,19 @@ export default function Home() {
         </div>
 
         <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">
-            {editingId ? "Edit Produk" : "Tambah Produk"}
-          </h2>
+          <h2 className="mb-3 text-lg font-semibold">{editingId ? "Edit Produk" : "Tambah Produk"}</h2>
           <p className="mb-4 text-sm text-gray-500">
-            Data minimal: nama, deskripsi, harga, stok, negara asal, tanggal pembelian, jastiper
-            ID.
+            Data minimal: nama, deskripsi, harga, stok, negara asal, tanggal pembelian, jastiper ID.
           </p>
 
-          {!isLoggedIn ? (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-              Fitur pengelolaan produk dinonaktifkan di mode guest.
-            </div>
-          ) : (
+          <RoleGate
+            roles={["JASTIPER", "ADMIN"]}
+            fallback={
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                Fitur pengelolaan produk hanya untuk role Jastiper/Admin.
+              </div>
+            }
+          >
             <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2">
               <input
                 value={form.name}
@@ -306,11 +285,7 @@ export default function Home() {
                   disabled={submitting}
                   className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
                 >
-                  {submitting
-                    ? "Menyimpan..."
-                    : editingId
-                      ? "Simpan Perubahan"
-                      : "Tambah Produk"}
+                  {submitting ? "Menyimpan..." : editingId ? "Simpan Perubahan" : "Tambah Produk"}
                 </button>
                 {editingId && (
                   <button
@@ -323,7 +298,7 @@ export default function Home() {
                 )}
               </div>
             </form>
-          )}
+          </RoleGate>
         </section>
 
         {loading && (
@@ -333,9 +308,7 @@ export default function Home() {
         )}
 
         {!loading && error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-            {error}
-          </div>
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
         )}
 
         {!loading && !error && filteredProducts.length === 0 && (
@@ -347,10 +320,7 @@ export default function Home() {
         {!loading && !error && filteredProducts.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredProducts.map((product) => (
-              <article
-                key={product.id}
-                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
-              >
+              <article key={product.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="mb-2 flex items-start justify-between gap-3">
                   <h2 className="line-clamp-2 text-base font-semibold">{product.name}</h2>
                   <span className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
@@ -359,12 +329,11 @@ export default function Home() {
                 </div>
                 <p className="mb-4 line-clamp-3 text-sm text-gray-600">{product.description}</p>
                 <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                  <p className="text-sm font-semibold">
-                    Rp {Number(product.price).toLocaleString("id-ID")}
-                  </p>
+                  <p className="text-sm font-semibold">Rp {Number(product.price).toLocaleString("id-ID")}</p>
                   <p className="text-xs text-gray-500">{product.originCountry}</p>
                 </div>
-                {isLoggedIn && (
+
+                <RoleGate roles={["JASTIPER", "ADMIN"]}>
                   <div className="mt-3 flex items-center gap-2">
                     <button
                       type="button"
@@ -381,7 +350,7 @@ export default function Home() {
                       Delete
                     </button>
                   </div>
-                )}
+                </RoleGate>
               </article>
             ))}
           </div>
