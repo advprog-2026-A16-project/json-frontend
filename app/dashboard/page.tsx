@@ -37,6 +37,19 @@ function DashboardContent() {
         <Link href="/kyc" className="rounded bg-indigo-600 px-3 py-2 text-sm text-white">
           KYC
         </Link>
+        {hasRole("ADMIN") && (
+          <>
+            <Link href="/admin/products" className="rounded bg-violet-700 px-3 py-2 text-sm text-white">
+              Admin Products
+            </Link>
+            <Link href="/admin/users" className="rounded bg-violet-700 px-3 py-2 text-sm text-white">
+              Admin Users
+            </Link>
+            <Link href="/admin/kyc" className="rounded bg-violet-700 px-3 py-2 text-sm text-white">
+              Admin KYC
+            </Link>
+          </>
+        )}
         {(hasRole("JASTIPER") || hasRole("ADMIN")) && (
           <Link href="/my/inventory" className="rounded bg-emerald-600 px-3 py-2 text-sm text-white">
             My Inventory
