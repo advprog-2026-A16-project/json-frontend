@@ -130,6 +130,12 @@ export default function ProductDetailPage() {
                   >
                     {isReserving ? "Reserving..." : "Reserve"}
                   </button>
+                  <Link
+                    href={`/orders?productId=${product.id}&quantity=${reserveQty}`}
+                    className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm hover:bg-gray-100"
+                  >
+                    Create Order
+                  </Link>
                 </div>
                 {reserveMessage && <p className="mt-2 text-sm text-gray-700">{reserveMessage}</p>}
               </div>

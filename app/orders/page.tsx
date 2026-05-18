@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { orderApi, type Order } from "@/lib/api/order";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -20,7 +21,10 @@ const emptyOrderForm: OrderForm = {
   shippingAddress: "",
 };
 
+type ListMode = "all" | "titipers" | "jastiper";
+
 function OrdersContent() {
+  const searchParams = useSearchParams();
   const { session, hasRole } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,9 +33,16 @@ function OrdersContent() {
   const [form, setForm] = useState<OrderForm>(emptyOrderForm);
   const [creating, setCreating] = useState(false);
   const [scopeUserId, setScopeUserId] = useState("");
+  const [listMode, setListMode] = useState<ListMode>("titipers");
 
   const role = session.role;
   const roleLabel = role ?? "UNKNOWN";
+
+  const defaultListMode = useMemo<ListMode>(() => {
+    if (role === "ADMIN") return "all";
+    if (role === "JASTIPER") return "jastiper";
+    return "titipers";
+  }, [role]);
 
   useEffect(() => {
     if (!form.titipersId && session.userId && role === "TITIPERS") {
@@ -42,11 +53,22 @@ function OrdersContent() {
     }
   }, [form.titipersId, role, scopeUserId, session.userId]);
 
-  const computedListMode = useMemo<"all" | "titipers" | "jastiper">(() => {
-    if (role === "ADMIN") return "all";
-    if (role === "JASTIPER") return "jastiper";
-    return "titipers";
-  }, [role]);
+  useEffect(() => {
+    setListMode(defaultListMode);
+  }, [defaultListMode]);
+
+  useEffect(() => {
+    const productId = searchParams.get("productId");
+    const quantity = searchParams.get("quantity");
+
+    if (!productId && !quantity) return;
+
+    setForm((prev) => ({
+      ...prev,
+      productId: productId ?? prev.productId,
+      quantity: quantity ?? prev.quantity,
+    }));
+  }, [searchParams]);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -55,9 +77,9 @@ function OrdersContent() {
     try {
       let data: Order[] = [];
 
-      if (computedListMode === "all") {
+      if (listMode === "all") {
         data = await orderApi.list();
-      } else if (computedListMode === "jastiper") {
+      } else if (listMode === "jastiper") {
         if (!scopeUserId.trim()) throw new Error("Jastiper userId is required to load orders.");
         data = await orderApi.listByJastiper(scopeUserId.trim());
       } else {
@@ -72,13 +94,14 @@ function OrdersContent() {
     } finally {
       setLoading(false);
     }
-  }, [computedListMode, scopeUserId]);
+  }, [listMode, scopeUserId]);
 
   useEffect(() => {
     void loadOrders();
   }, [loadOrders]);
 
   const canCreateOrder = hasRole("TITIPERS") || hasRole("ADMIN");
+  const isTitipersRole = hasRole("TITIPERS");
 
   const handleCreateOrder = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -133,13 +156,25 @@ function OrdersContent() {
           <h2 className="mb-3 text-lg font-semibold">Order Scope</h2>
           <p className="mb-3 text-xs text-gray-500">Current role: {roleLabel}</p>
 
+          <label className="mb-1 block text-sm font-medium">List Mode</label>
+          <select
+            value={listMode}
+            onChange={(event) => setListMode(event.target.value as ListMode)}
+            className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            disabled={!hasRole("ADMIN")}
+          >
+            <option value="all">All Orders</option>
+            <option value="titipers">Titipers Orders</option>
+            <option value="jastiper">Jastiper Orders</option>
+          </select>
+
           <label className="mb-1 block text-sm font-medium">Scoped User ID</label>
           <input
             value={scopeUserId}
             onChange={(event) => setScopeUserId(event.target.value)}
             placeholder="UUID user id"
             className="mb-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            disabled={computedListMode === "all"}
+            disabled={listMode === "all"}
           />
           <button
             onClick={() => void loadOrders()}
@@ -158,6 +193,7 @@ function OrdersContent() {
                   onChange={(event) => setForm((prev) => ({ ...prev, titipersId: event.target.value }))}
                   placeholder="Titipers ID (UUID)"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  disabled={isTitipersRole}
                 />
                 <input
                   value={form.productId}
@@ -196,7 +232,7 @@ function OrdersContent() {
         <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Order List</h2>
-            <p className="text-xs text-gray-500">Mode: {computedListMode}</p>
+            <p className="text-xs text-gray-500">Mode: {listMode}</p>
           </div>
 
           {error && <div className="mb-3 rounded bg-red-100 px-3 py-2 text-sm text-red-700">{error}</div>}
@@ -228,6 +264,9 @@ function OrdersContent() {
                   </div>
                   <p className="mt-1 text-xs text-gray-600">
                     Product: {order.productId} | Qty: {order.quantity}
+                  </p>
+                  <p className="mt-1 line-clamp-1 text-xs text-gray-600">
+                    Ship to: {order.shippingAddress}
                   </p>
                   <p className="mt-1 text-xs text-gray-600">
                     Total: Rp {Number(order.totalPrice ?? 0).toLocaleString("id-ID")}

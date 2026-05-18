@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { orderApi, type Order, type OrderStatus } from "@/lib/api/order";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
-const nextStatuses: OrderStatus[] = ["PAID", "PURCHASED", "SHIPPED", "COMPLETED", "CANCELLED"];
+const orderTimeline: OrderStatus[] = ["PAID", "PURCHASED", "SHIPPED", "COMPLETED"];
+
+const allowedTransitionMap: Record<OrderStatus, OrderStatus[]> = {
+  PAID: ["PAID", "PURCHASED", "CANCELLED"],
+  PURCHASED: ["PURCHASED", "SHIPPED", "CANCELLED"],
+  SHIPPED: ["SHIPPED", "COMPLETED"],
+  COMPLETED: ["COMPLETED"],
+  CANCELLED: ["CANCELLED"],
+};
 
 function OrderDetailContent() {
   const { hasRole } = useAuth();
@@ -22,6 +30,10 @@ function OrderDetailContent() {
   const [message, setMessage] = useState("");
 
   const canUpdateStatus = hasRole("JASTIPER") || hasRole("ADMIN");
+  const allowedStatuses = useMemo<OrderStatus[]>(
+    () => (order ? allowedTransitionMap[order.status] : ["PAID"]),
+    [order],
+  );
 
   const loadDetail = useCallback(async () => {
     if (!id) return;
@@ -43,6 +55,12 @@ function OrderDetailContent() {
   useEffect(() => {
     void loadDetail();
   }, [loadDetail]);
+
+  useEffect(() => {
+    if (!allowedStatuses.includes(selectedStatus)) {
+      setSelectedStatus(allowedStatuses[0]);
+    }
+  }, [allowedStatuses, selectedStatus]);
 
   const handleUpdateStatus = async () => {
     if (!id) return;
@@ -116,16 +134,46 @@ function OrderDetailContent() {
               </p>
             </div>
 
+            <div className="mt-6 rounded border border-gray-200 bg-gray-50 p-4">
+              <h2 className="mb-3 text-sm font-semibold">Order Timeline</h2>
+              <div className="flex flex-wrap gap-2">
+                {orderTimeline.map((status) => {
+                  const currentIndex = orderTimeline.indexOf(order.status);
+                  const stepIndex = orderTimeline.indexOf(status);
+                  const reached = currentIndex >= 0 && stepIndex <= currentIndex;
+
+                  return (
+                    <span
+                      key={status}
+                      className={`rounded px-2 py-1 text-xs font-medium ${
+                        reached ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {status}
+                    </span>
+                  );
+                })}
+                {order.status === "CANCELLED" && (
+                  <span className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                    CANCELLED
+                  </span>
+                )}
+              </div>
+            </div>
+
             {canUpdateStatus && (
               <div className="mt-6 rounded border border-gray-200 bg-gray-50 p-4">
                 <h2 className="mb-2 text-sm font-semibold">Update Status</h2>
+                <p className="mb-2 text-xs text-gray-500">
+                  Allowed transition from current status: {order.status}
+                </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={selectedStatus}
                     onChange={(event) => setSelectedStatus(event.target.value as OrderStatus)}
                     className="rounded border border-gray-300 px-3 py-2 text-sm"
                   >
-                    {nextStatuses.map((status) => (
+                    {allowedStatuses.map((status) => (
                       <option key={status} value={status}>
                         {status}
                       </option>
