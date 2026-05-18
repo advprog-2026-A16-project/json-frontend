@@ -25,6 +25,12 @@ function DashboardContent() {
         <Link href="/inventory" className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
           Catalog
         </Link>
+        <Link href="/profile" className="rounded bg-slate-600 px-3 py-2 text-sm text-white">
+          Profile
+        </Link>
+        <Link href="/kyc" className="rounded bg-indigo-600 px-3 py-2 text-sm text-white">
+          KYC
+        </Link>
         {(hasRole("JASTIPER") || hasRole("ADMIN")) && (
           <Link href="/my/inventory" className="rounded bg-emerald-600 px-3 py-2 text-sm text-white">
             My Inventory

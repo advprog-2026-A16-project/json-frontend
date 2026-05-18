@@ -12,11 +12,29 @@ export type MyProfileResponse = {
   rating: number;
 };
 
+export type UpdateProfilePayload = {
+  username: string;
+  fullName: string;
+  bio: string;
+};
+
+export type KycSubmitPayload = {
+  fullName: string;
+  identityNumber: string;
+  socialMediaLink: string;
+};
+
 export const profileApi = {
   me: () => apiRequest<MyProfileResponse>("/api/profile/me", { method: "GET" }),
-  updateMe: <T = unknown>(payload: unknown) =>
-    apiRequest<T>("/api/profile/me", {
+  updateMe: (payload: UpdateProfilePayload) =>
+    apiRequest<MyProfileResponse>("/api/profile/me", {
       method: "PUT",
       body: JSON.stringify(payload),
+    }),
+  submitKyc: (payload: KycSubmitPayload) =>
+    apiRequest<null>("/api/kyc/submit", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      fallbackErrorMessage: "KYC submission failed.",
     }),
 };

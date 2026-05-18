@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { inventoryApi } from "@/lib/api";
 import type { Product } from "@/lib/api/inventory";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -20,7 +20,7 @@ export default function ProductDetailPage() {
 
   const { isAuthenticated } = useAuth();
 
-  const fetchDetail = async () => {
+  const fetchDetail = useCallback(async () => {
     if (!productId) return;
 
     setLoading(true);
@@ -35,11 +35,11 @@ export default function ProductDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
 
   useEffect(() => {
-    fetchDetail();
-  }, [productId]);
+    void fetchDetail();
+  }, [fetchDetail]);
 
   const handleReserve = async () => {
     if (!productId) return;

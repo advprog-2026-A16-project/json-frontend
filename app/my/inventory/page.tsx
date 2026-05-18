@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { inventoryApi } from "@/lib/api";
 import type { Product } from "@/lib/api/inventory";
@@ -42,9 +42,10 @@ function MyInventoryContent() {
   const [size, setSize] = useState(20);
   const [hasNext, setHasNext] = useState(false);
 
-  const isJastiperIdValid = uuidPattern.test(jastiperId.trim());
+  const normalizedJastiperId = jastiperId.trim();
+  const isJastiperIdValid = uuidPattern.test(normalizedJastiperId);
 
-  const fetchMyProducts = async () => {
+  const fetchMyProducts = useCallback(async () => {
     if (!isJastiperIdValid) {
       setProducts([]);
       setError("Input Jastiper ID UUID valid terlebih dahulu.");
@@ -55,7 +56,7 @@ function MyInventoryContent() {
     setError("");
 
     try {
-      const data = await inventoryApi.listByJastiper(jastiperId.trim(), {
+      const data = await inventoryApi.listByJastiper(normalizedJastiperId, {
         page,
         size,
         sortBy: "createdAt",
@@ -71,13 +72,13 @@ function MyInventoryContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isJastiperIdValid, normalizedJastiperId, page, size]);
 
   useEffect(() => {
     if (isJastiperIdValid) {
-      fetchMyProducts();
+      void fetchMyProducts();
     }
-  }, [page, size]);
+  }, [fetchMyProducts, isJastiperIdValid]);
 
   const resetForm = () => {
     setForm(emptyForm);
@@ -108,7 +109,7 @@ function MyInventoryContent() {
     stock: Number(form.stock),
     originCountry: form.originCountry.trim(),
     purchaseDate: form.purchaseDate,
-    jastiperId: jastiperId.trim(),
+    jastiperId: normalizedJastiperId,
   });
 
   const handleSubmit = async (event: React.FormEvent) => {

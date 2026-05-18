@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { inventoryApi } from "@/lib/api";
 import type { Product } from "@/lib/api/inventory";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -26,7 +26,7 @@ export default function InventoryPage() {
 
   const { isAuthenticated, session, hasRole } = useAuth();
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -46,11 +46,11 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [direction, keyword, page, size, sortBy]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [page, size, sortBy, direction, keyword]);
+    void fetchProducts();
+  }, [fetchProducts]);
 
   const applySearch = () => {
     setPage(0);
