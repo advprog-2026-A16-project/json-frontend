@@ -9,6 +9,8 @@ export type Product = {
   originCountry: string;
   purchaseDate?: string;
   jastiperId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type ProductPayload = {
@@ -21,12 +23,59 @@ export type ProductPayload = {
   jastiperId: string;
 };
 
+export type ProductQuery = {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  direction?: "asc" | "desc";
+};
+
+const toQueryString = (query: Record<string, string | number | undefined>) => {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      params.append(key, String(value));
+    }
+  }
+
+  const encoded = params.toString();
+  return encoded ? `?${encoded}` : "";
+};
+
 export const inventoryApi = {
-  list: () =>
-    apiRequest<Product[]>("/api/products", {
+  list: (query: ProductQuery = {}) =>
+    apiRequest<Product[]>(`/api/products${toQueryString(query)}`, {
       method: "GET",
       withAuth: false,
       fallbackErrorMessage: "Failed to fetch products.",
+    }),
+
+  search: (keyword: string, query: ProductQuery = {}) =>
+    apiRequest<Product[]>(
+      `/api/products/search${toQueryString({ keyword, ...query })}`,
+      {
+        method: "GET",
+        withAuth: false,
+        fallbackErrorMessage: "Failed to search products.",
+      },
+    ),
+
+  listByJastiper: (jastiperId: string, query: ProductQuery = {}) =>
+    apiRequest<Product[]>(
+      `/api/products/jastiper/${jastiperId}${toQueryString(query)}`,
+      {
+        method: "GET",
+        withAuth: false,
+        fallbackErrorMessage: "Failed to fetch jastiper products.",
+      },
+    ),
+
+  detail: (id: string) =>
+    apiRequest<Product>(`/api/products/${id}`, {
+      method: "GET",
+      withAuth: false,
+      fallbackErrorMessage: "Failed to fetch product detail.",
     }),
 
   create: (payload: ProductPayload) =>
@@ -47,5 +96,11 @@ export const inventoryApi = {
     apiRequest<void>(`/api/products/${id}`, {
       method: "DELETE",
       fallbackErrorMessage: "Failed to delete product.",
+    }),
+
+  reserve: (id: string, quantity: number) =>
+    apiRequest<void>(`/api/products/${id}/reserve${toQueryString({ quantity })}`, {
+      method: "POST",
+      fallbackErrorMessage: "Failed to reserve stock.",
     }),
 };

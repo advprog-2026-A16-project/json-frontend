@@ -71,6 +71,26 @@ export const clearSession = () => {
   window.dispatchEvent(new Event("json-auth-change"));
 };
 
+type SessionPatch = {
+  role?: unknown;
+  userId?: unknown;
+  email?: unknown;
+};
+
+export const patchSessionIdentity = (patch: SessionPatch) => {
+  if (!isBrowser()) return;
+
+  const role = normalizeRole(patch.role);
+  const userId = typeof patch.userId === "string" ? patch.userId : null;
+  const email = typeof patch.email === "string" ? patch.email : null;
+
+  if (role) localStorage.setItem(ROLE_KEY, role);
+  if (userId) localStorage.setItem(USER_ID_KEY, userId);
+  if (email) localStorage.setItem(EMAIL_KEY, email);
+
+  window.dispatchEvent(new Event("json-auth-change"));
+};
+
 export const setSessionFromAuthResponse = (payload: AuthResponse) => {
   if (!isBrowser() || !payload.token) return;
 
