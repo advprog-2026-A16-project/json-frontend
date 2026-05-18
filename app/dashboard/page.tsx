@@ -25,6 +25,9 @@ function DashboardContent() {
         <Link href="/inventory" className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
           Catalog
         </Link>
+        <Link href="/orders" className="rounded bg-amber-600 px-3 py-2 text-sm text-white">
+          Orders
+        </Link>
         <Link href="/profile" className="rounded bg-slate-600 px-3 py-2 text-sm text-white">
           Profile
         </Link>
