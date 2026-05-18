@@ -34,6 +34,7 @@ function OrdersContent() {
   const [creating, setCreating] = useState(false);
   const [scopeUserId, setScopeUserId] = useState("");
   const [listMode, setListMode] = useState<ListMode>("titipers");
+  const [walletHint, setWalletHint] = useState("");
 
   const role = session.role;
   const roleLabel = role ?? "UNKNOWN";
@@ -107,6 +108,7 @@ function OrdersContent() {
     event.preventDefault();
     setError("");
     setSuccess("");
+    setWalletHint("");
 
     const quantity = Number(form.quantity);
     if (!form.titipersId.trim()) return setError("titipersId is required.");
@@ -126,7 +128,11 @@ function OrdersContent() {
       setForm((prev) => ({ ...emptyOrderForm, titipersId: prev.titipersId }));
       await loadOrders();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create order.");
+      const message = err instanceof Error ? err.message : "Failed to create order.";
+      setError(message);
+      if (/saldo|balance|top-?up|insufficient/i.test(message)) {
+        setWalletHint("Wallet balance issue detected. Open Wallet page to top-up, then retry checkout.");
+      }
     } finally {
       setCreating(false);
     }
@@ -238,6 +244,14 @@ function OrdersContent() {
           {error && <div className="mb-3 rounded bg-red-100 px-3 py-2 text-sm text-red-700">{error}</div>}
           {success && (
             <div className="mb-3 rounded bg-emerald-100 px-3 py-2 text-sm text-emerald-700">{success}</div>
+          )}
+          {walletHint && (
+            <div className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              {walletHint}{" "}
+              <Link href="/wallet" className="font-medium underline">
+                Open Wallet
+              </Link>
+            </div>
           )}
 
           {loading && <p className="text-sm text-gray-600">Loading orders...</p>}

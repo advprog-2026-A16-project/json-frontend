@@ -28,6 +28,9 @@ function DashboardContent() {
         <Link href="/orders" className="rounded bg-amber-600 px-3 py-2 text-sm text-white">
           Orders
         </Link>
+        <Link href="/wallet" className="rounded bg-teal-600 px-3 py-2 text-sm text-white">
+          Wallet
+        </Link>
         <Link href="/profile" className="rounded bg-slate-600 px-3 py-2 text-sm text-white">
           Profile
         </Link>
