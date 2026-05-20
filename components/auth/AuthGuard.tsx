@@ -36,7 +36,7 @@ export const AuthGuard = ({
     }
 
     if (requireAuth && isAuthenticated && needsRole && !isRoleAllowed) {
-      router.replace(redirectTo ?? "/dashboard");
+      router.replace(redirectTo ?? "/inventory");
     }
   }, [
     isAuthenticated,

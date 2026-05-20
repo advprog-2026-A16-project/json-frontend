@@ -3,6 +3,7 @@ import type { UserRole } from "@/lib/auth/types";
 
 export type MyProfileResponse = {
   profileId: string;
+  userId?: string;
   email: string;
   username: string;
   fullName: string | null;

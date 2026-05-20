@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { Banner, StateCard } from "@/components/ui/feedback";
+import { ProductImage } from "@/components/ui/product-image";
 import { adminApi } from "@/lib/api";
 import type { Product, ProductPayload } from "@/lib/api/inventory";
 
 type ProductForm = {
   name: string;
   description: string;
+  imageUrl: string;
   price: string;
   stock: string;
   originCountry: string;
@@ -19,12 +22,22 @@ type ProductForm = {
 const toForm = (product: Product): ProductForm => ({
   name: product.name ?? "",
   description: product.description ?? "",
+  imageUrl: product.imageUrl ?? "",
   price: String(product.price ?? ""),
   stock: String(product.stock ?? ""),
   originCountry: product.originCountry ?? "",
   purchaseDate: product.purchaseDate?.slice(0, 10) ?? "",
   jastiperId: product.jastiperId ?? "",
 });
+
+const isHttpUrl = (value: string) => {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 function AdminProductsContent() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -52,7 +65,7 @@ function AdminProductsContent() {
     void loadProducts();
   }, []);
 
-  const productCountLabel = useMemo(() => `${products.length} product(s)`, [products.length]);
+  const productCountLabel = useMemo(() => `${products.length} produk aktif`, [products.length]);
 
   const startEdit = (product: Product) => {
     setEditing(product);
@@ -84,6 +97,7 @@ function AdminProductsContent() {
     const payload: ProductPayload = {
       name: form.name.trim(),
       description: form.description.trim(),
+      imageUrl: form.imageUrl.trim(),
       price: Number(form.price),
       stock: Number(form.stock),
       originCountry: form.originCountry.trim(),
@@ -105,6 +119,10 @@ function AdminProductsContent() {
       setError("Stock must be a non-negative integer.");
       return;
     }
+    if (payload.imageUrl?.trim() && !isHttpUrl(payload.imageUrl.trim())) {
+      setError("Image URL must start with http:// or https://");
+      return;
+    }
 
     setSubmitting(true);
     setError("");
@@ -121,51 +139,55 @@ function AdminProductsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="border-b border-gray-200 bg-white">
+    <div className="min-h-screen bg-[#f4f6fb] text-slate-900">
+      <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
           <div>
-            <h1 className="text-2xl font-bold">Admin Products</h1>
-            <p className="text-sm text-gray-500">Global inventory moderation.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Admin</p>
+            <h1 className="text-2xl font-black text-slate-900">Moderasi Produk</h1>
+            <p className="text-sm text-slate-500">Tinjau katalog global dan ubah data produk yang perlu diperbaiki.</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/admin/users" className="rounded-md border border-gray-300 px-3 py-2 text-sm">
-              Users
+            <Link href="/admin/users" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              Pengguna
             </Link>
-            <Link href="/admin/kyc" className="rounded-md border border-gray-300 px-3 py-2 text-sm">
+            <Link href="/admin/kyc" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
               KYC
-            </Link>
-            <Link href="/dashboard" className="rounded-md border border-gray-300 px-3 py-2 text-sm">
-              Dashboard
             </Link>
           </div>
         </div>
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-6 py-8">
-        <section className="mb-4 rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-700 shadow-sm">
-          {productCountLabel}
+        <section className="mb-6 rounded-[28px] bg-[#2563eb] p-5 text-white shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-100">Ringkasan katalog</p>
+          <p className="mt-3 text-3xl font-black">{productCountLabel}</p>
+          <p className="mt-2 text-sm text-blue-100">Gunakan panel ini untuk moderasi produk bermasalah atau ilegal.</p>
         </section>
 
-        {error && (
-          <section className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</section>
-        )}
+        {error && <Banner tone="error" className="mb-4">{error}</Banner>}
 
         {editing && form && (
-          <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-lg font-semibold">Edit Product</h2>
+          <section className="mb-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-3 text-xl font-bold text-slate-900">Edit Produk</h2>
             <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2">
               <input
                 value={form.name}
                 onChange={(e) => setForm((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
-                placeholder="Name"
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                placeholder="Nama"
+                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
               />
               <input
                 value={form.originCountry}
                 onChange={(e) => setForm((prev) => (prev ? { ...prev, originCountry: e.target.value } : prev))}
-                placeholder="Origin country"
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                placeholder="Negara asal"
+                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              />
+              <input
+                value={form.imageUrl}
+                onChange={(e) => setForm((prev) => (prev ? { ...prev, imageUrl: e.target.value } : prev))}
+                placeholder="Image URL (https://...)"
+                className="rounded-xl border border-slate-300 px-3 py-2 text-sm md:col-span-2"
               />
               <input
                 value={form.price}
@@ -173,82 +195,85 @@ function AdminProductsContent() {
                 type="number"
                 min="0.01"
                 step="0.01"
-                placeholder="Price"
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                placeholder="Harga"
+                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
               />
               <input
                 value={form.stock}
                 onChange={(e) => setForm((prev) => (prev ? { ...prev, stock: e.target.value } : prev))}
                 type="number"
                 min="0"
-                placeholder="Stock"
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                placeholder="Stok"
+                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
               />
               <input
                 value={form.purchaseDate}
                 onChange={(e) => setForm((prev) => (prev ? { ...prev, purchaseDate: e.target.value } : prev))}
                 type="date"
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
               />
               <input
                 value={form.jastiperId}
                 onChange={(e) => setForm((prev) => (prev ? { ...prev, jastiperId: e.target.value } : prev))}
-                placeholder="Jastiper ID"
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                placeholder="ID Jastiper"
+                className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
               />
               <textarea
                 value={form.description}
                 onChange={(e) => setForm((prev) => (prev ? { ...prev, description: e.target.value } : prev))}
-                placeholder="Description"
-                className="min-h-24 rounded-md border border-gray-300 px-3 py-2 text-sm md:col-span-2"
+                placeholder="Deskripsi"
+                className="min-h-24 rounded-xl border border-slate-300 px-3 py-2 text-sm md:col-span-2"
               />
               <div className="md:col-span-2 flex gap-2">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-60"
+                  className="rounded-xl bg-[#2563eb] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                 >
-                  {submitting ? "Saving..." : "Save"}
+                  {submitting ? "Menyimpan..." : "Simpan"}
                 </button>
-                <button type="button" onClick={cancelEdit} className="rounded-md border border-gray-300 px-4 py-2 text-sm">
-                  Cancel
+                <button type="button" onClick={cancelEdit} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">
+                  Batal
                 </button>
               </div>
             </form>
           </section>
         )}
 
-        {loading && <section className="rounded-xl border border-gray-200 bg-white p-4 text-sm">Loading...</section>}
+        {loading && <StateCard message="Memuat produk..." className="rounded-2xl bg-white" />}
 
         {!loading && products.length === 0 && !error && (
-          <section className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
-            No products found.
-          </section>
+          <StateCard message="Tidak ada produk yang ditemukan." className="rounded-2xl bg-white" />
         )}
 
         {!loading && products.length > 0 && (
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product) => (
-              <article key={product.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <article key={product.id} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                <ProductImage
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="mb-3 aspect-[4/3] overflow-hidden rounded-2xl border border-gray-100 bg-gray-100"
+                />
                 <h3 className="font-semibold">{product.name}</h3>
                 <p className="mt-1 line-clamp-3 text-sm text-gray-600">{product.description}</p>
-                <p className="mt-2 text-sm">Stock: {product.stock}</p>
-                <p className="text-sm">Price: Rp {Number(product.price).toLocaleString("id-ID")}</p>
+                <p className="mt-2 text-sm">Stok: {product.stock}</p>
+                <p className="text-sm">Harga: Rp {Number(product.price).toLocaleString("id-ID")}</p>
                 <p className="text-xs text-gray-500">{product.originCountry}</p>
                 <div className="mt-3 flex gap-2">
                   <button
                     type="button"
                     onClick={() => startEdit(product)}
-                    className="rounded-md border border-gray-300 px-3 py-1 text-xs hover:bg-gray-100"
+                    className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDelete(product.id)}
-                    className="rounded-md border border-red-300 px-3 py-1 text-xs text-red-700 hover:bg-red-50"
+                    className="rounded-xl border border-red-300 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
                   >
-                    Delete
+                    Hapus
                   </button>
                 </div>
               </article>

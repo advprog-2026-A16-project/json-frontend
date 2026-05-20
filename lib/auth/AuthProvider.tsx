@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useMemo, useSyncExternalStore } from "react";
-import { clearSession, getSession } from "@/lib/auth/session";
+import { createContext, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { profileApi } from "@/lib/api";
+import { clearSession, getSession, patchSessionIdentity } from "@/lib/auth/session";
 import type { AuthSession, UserRole } from "@/lib/auth/types";
 
 type AuthContextValue = {
@@ -53,6 +54,60 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const session = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const bootstrapAttemptedForToken = useRef<string | null>(null);
+  const bootstrapRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!session.token) {
+      bootstrapAttemptedForToken.current = null;
+      if (bootstrapRetryTimer.current) {
+        clearTimeout(bootstrapRetryTimer.current);
+        bootstrapRetryTimer.current = null;
+      }
+      return;
+    }
+
+    const needsBootstrap = !session.role || !session.email;
+    if (!needsBootstrap) return;
+
+    if (bootstrapAttemptedForToken.current === session.token) return;
+    bootstrapAttemptedForToken.current = session.token;
+
+    void (async () => {
+      try {
+        const me = await profileApi.me();
+        patchSessionIdentity({
+          role: me.role,
+          userId: me.userId,
+          email: me.email,
+        });
+      } catch {
+        // Retry once for cases where token is persisted slightly earlier than backend auth readiness.
+        if (bootstrapRetryTimer.current) clearTimeout(bootstrapRetryTimer.current);
+        bootstrapRetryTimer.current = setTimeout(async () => {
+          try {
+            const me = await profileApi.me();
+            patchSessionIdentity({
+              role: me.role,
+              userId: me.userId,
+              email: me.email,
+            });
+          } catch {
+            // Keep token-only session when profile endpoint remains unavailable.
+          }
+        }, 600);
+      }
+    })();
+  }, [session.token, session.role, session.email]);
+
+  useEffect(() => {
+    return () => {
+      if (bootstrapRetryTimer.current) {
+        clearTimeout(bootstrapRetryTimer.current);
+        bootstrapRetryTimer.current = null;
+      }
+    };
+  }, []);
 
   const value = useMemo<AuthContextValue>(() => {
     const isAuthenticated = Boolean(session.token);

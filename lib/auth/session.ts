@@ -12,6 +12,9 @@ const DEFAULT_SESSION: AuthSession = {
   email: null,
 };
 
+let cachedSession: AuthSession = DEFAULT_SESSION;
+let cachedSignature = JSON.stringify([null, null, null, null]);
+
 const isBrowser = () => typeof window !== "undefined";
 
 const parseJwtPayload = (token: string): Record<string, unknown> | null => {
@@ -45,15 +48,38 @@ const normalizeRole = (value: unknown): UserRole | null => {
   return null;
 };
 
+const normalizeUuid = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidPattern.test(trimmed) ? trimmed : null;
+};
+
 export const getSession = (): AuthSession => {
   if (!isBrowser()) return DEFAULT_SESSION;
 
-  return {
+  const nextSession: AuthSession = {
     token: localStorage.getItem(TOKEN_KEY),
     role: (localStorage.getItem(ROLE_KEY) as UserRole | null) ?? null,
     userId: localStorage.getItem(USER_ID_KEY),
     email: localStorage.getItem(EMAIL_KEY),
   };
+
+  const nextSignature = JSON.stringify([
+    nextSession.token,
+    nextSession.role,
+    nextSession.userId,
+    nextSession.email,
+  ]);
+
+  if (nextSignature === cachedSignature) {
+    return cachedSession;
+  }
+
+  cachedSession = nextSession;
+  cachedSignature = nextSignature;
+  return cachedSession;
 };
 
 export const getAccessToken = (): string | null => {
@@ -81,7 +107,7 @@ export const patchSessionIdentity = (patch: SessionPatch) => {
   if (!isBrowser()) return;
 
   const role = normalizeRole(patch.role);
-  const userId = typeof patch.userId === "string" ? patch.userId : null;
+  const userId = normalizeUuid(patch.userId);
   const email = typeof patch.email === "string" ? patch.email : null;
 
   if (role) localStorage.setItem(ROLE_KEY, role);
@@ -102,12 +128,13 @@ export const setSessionFromAuthResponse = (payload: AuthResponse) => {
     normalizeRole(jwtPayload?.authorities);
 
   const userId =
-    payload.userId ??
-    (typeof jwtPayload?.userId === "string" ? jwtPayload.userId : null) ??
-    (typeof jwtPayload?.sub === "string" ? jwtPayload.sub : null);
+    normalizeUuid(payload.userId) ??
+    normalizeUuid(jwtPayload?.userId);
 
   const email =
-    payload.email ?? (typeof jwtPayload?.email === "string" ? jwtPayload.email : null);
+    payload.email ??
+    (typeof jwtPayload?.email === "string" ? jwtPayload.email : null) ??
+    (typeof jwtPayload?.sub === "string" ? jwtPayload.sub : null);
 
   localStorage.setItem(TOKEN_KEY, payload.token);
 

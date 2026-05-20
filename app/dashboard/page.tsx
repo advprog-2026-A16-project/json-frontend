@@ -1,63 +1,94 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
 function DashboardContent() {
-  const router = useRouter();
-  const { session, logout, hasRole } = useAuth();
+  const { session, hasRole } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    router.push("/auth/login");
-  };
+  const quickActions = [
+    { href: "/inventory", title: "Jelajahi Katalog", desc: "Cari produk dan lanjutkan ke checkout." },
+    { href: "/orders", title: "Pesanan Saya", desc: "Lihat status order aktif dan riwayat pesanan." },
+    { href: "/profile", title: "Profil", desc: "Perbarui identitas akun dan data pribadi." },
+  ];
+
+  if (hasRole("JASTIPER") || hasRole("ADMIN")) {
+    quickActions.push({
+      href: "/my/inventory",
+      title: "Katalog Saya",
+      desc: "Kelola produk, harga, dan stok.",
+    });
+  }
+
+  if (hasRole("ADMIN")) {
+    quickActions.length = 0;
+    quickActions.push({
+      href: "/orders",
+      title: "Log Pesanan",
+      desc: "Monitoring seluruh riwayat order sistem.",
+    });
+    quickActions.push({
+      href: "/admin/products",
+      title: "Panel Produk",
+      desc: "Moderasi data produk di seluruh sistem.",
+    });
+    quickActions.push({
+      href: "/admin/kyc",
+      title: "Antrian KYC",
+      desc: "Validasi submission KYC jastiper.",
+    });
+  }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 px-6 text-center">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p className="text-sm text-gray-700">Session active.</p>
-      <p className="text-xs text-gray-500">
-        Role: <span className="font-medium">{session.role ?? "UNKNOWN"}</span>
-      </p>
-      <div className="flex flex-wrap justify-center gap-3">
-        <Link href="/inventory" className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
-          Catalog
-        </Link>
-        <Link href="/orders" className="rounded bg-amber-600 px-3 py-2 text-sm text-white">
-          Orders
-        </Link>
-        <Link href="/wallet" className="rounded bg-teal-600 px-3 py-2 text-sm text-white">
-          Wallet
-        </Link>
-        <Link href="/profile" className="rounded bg-slate-600 px-3 py-2 text-sm text-white">
-          Profile
-        </Link>
-        <Link href="/kyc" className="rounded bg-indigo-600 px-3 py-2 text-sm text-white">
-          KYC
-        </Link>
-        {hasRole("ADMIN") && (
-          <>
-            <Link href="/admin/products" className="rounded bg-violet-700 px-3 py-2 text-sm text-white">
-              Admin Products
+    <div className="min-h-screen bg-[#f4f6fb] px-6 py-8">
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Dashboard</p>
+          <h1 className="text-3xl font-black text-slate-900">Selamat datang kembali</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            {session.email ? `Masuk sebagai ${session.email}` : "Masuk ke akun marketplace kamu."}
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Katalog</p>
+            <p className="mt-2 text-2xl font-black text-slate-900">Produk Global</p>
+            <p className="mt-1 text-sm text-slate-600">Temukan produk lintas negara dari seller aktif.</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pesanan</p>
+            <p className="mt-2 text-2xl font-black text-slate-900">Checkout Siap</p>
+            <p className="mt-1 text-sm text-slate-600">Buat order baru dan pantau progres pengiriman.</p>
+          </div>
+          {hasRole("ADMIN") ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Moderasi</p>
+              <p className="mt-2 text-2xl font-black text-slate-900">KYC + Kontrol Produk</p>
+              <p className="mt-1 text-sm text-slate-600">Akses panel admin untuk moderasi sistem.</p>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Profil</p>
+              <p className="mt-2 text-2xl font-black text-slate-900">Identitas Akun</p>
+              <p className="mt-1 text-sm text-slate-600">Lengkapi profil dan data akun sebelum transaksi.</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {quickActions.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300"
+            >
+              <p className="text-lg font-semibold text-slate-900">{item.title}</p>
+              <p className="mt-2 text-sm text-slate-600">{item.desc}</p>
             </Link>
-            <Link href="/admin/users" className="rounded bg-violet-700 px-3 py-2 text-sm text-white">
-              Admin Users
-            </Link>
-            <Link href="/admin/kyc" className="rounded bg-violet-700 px-3 py-2 text-sm text-white">
-              Admin KYC
-            </Link>
-          </>
-        )}
-        {(hasRole("JASTIPER") || hasRole("ADMIN")) && (
-          <Link href="/my/inventory" className="rounded bg-emerald-600 px-3 py-2 text-sm text-white">
-            My Inventory
-          </Link>
-        )}
-        <button onClick={handleLogout} className="rounded bg-red-500 px-3 py-2 text-sm text-white">
-          Logout
-        </button>
+          ))}
+        </div>
       </div>
     </div>
   );

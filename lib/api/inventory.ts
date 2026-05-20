@@ -4,6 +4,7 @@ export type Product = {
   id: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
   price: number;
   stock: number;
   originCountry: string;
@@ -16,6 +17,7 @@ export type Product = {
 export type ProductPayload = {
   name: string;
   description: string;
+  imageUrl?: string;
   price: number;
   stock: number;
   originCountry: string;
@@ -96,11 +98,5 @@ export const inventoryApi = {
     apiRequest<void>(`/api/products/${id}`, {
       method: "DELETE",
       fallbackErrorMessage: "Failed to delete product.",
-    }),
-
-  reserve: (id: string, quantity: number) =>
-    apiRequest<void>(`/api/products/${id}/reserve${toQueryString({ quantity })}`, {
-      method: "POST",
-      fallbackErrorMessage: "Failed to reserve stock.",
     }),
 };

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { Banner } from "@/components/ui/feedback";
 import { profileApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 type KycForm = {
   fullName: string;
@@ -12,6 +15,8 @@ type KycForm = {
 };
 
 function KycContent() {
+  const router = useRouter();
+  const { hasRole } = useAuth();
   const [form, setForm] = useState<KycForm>({
     fullName: "",
     identityNumber: "",
@@ -20,6 +25,17 @@ function KycContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const isAdmin = hasRole("ADMIN");
+
+  useEffect(() => {
+    if (isAdmin) {
+      router.replace("/admin/kyc");
+    }
+  }, [isAdmin, router]);
+
+  if (isAdmin) {
+    return <div className="p-6 text-sm text-gray-600">Redirecting to admin KYC queue...</div>;
+  }
 
   const updateField = (key: keyof KycForm, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -50,8 +66,8 @@ function KycContent() {
     <div className="mx-auto min-h-screen w-full max-w-2xl p-6">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">KYC Submission</h1>
-        <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">
-          Back to Dashboard
+        <Link href="/inventory" className="text-sm text-blue-600 hover:underline">
+          Back to Catalog
         </Link>
       </div>
 
@@ -59,10 +75,8 @@ function KycContent() {
         Submit KYC data for identity verification before jastiper operations.
       </p>
 
-      {error && <p className="mb-3 rounded bg-red-100 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {success && (
-        <p className="mb-3 rounded bg-emerald-100 px-3 py-2 text-sm text-emerald-700">{success}</p>
-      )}
+      {error && <Banner tone="error" className="mb-3">{error}</Banner>}
+      {success && <Banner tone="success" className="mb-3">{success}</Banner>}
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded border border-gray-200 bg-white p-4">
         <div>
