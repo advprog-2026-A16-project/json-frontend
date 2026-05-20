@@ -1,0 +1,22 @@
+name: Deploy Frontend Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Heroku Production
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Heroku
+        uses: akhileshns/heroku-deploy@581dd286c962b6972d427fcf8980f60755c15520
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.HEROKU_FRONTEND_PROD_APP_NAME }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}

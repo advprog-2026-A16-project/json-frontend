@@ -1,22 +1,25 @@
-// lib/api.ts
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:8080"
-    : "https://json-backend-staging-9413d4381c05.herokuapp.com");
+import { API_BASE_URL } from "@/lib/api/config";
+import { getAccessToken } from "@/lib/auth/session";
+
+export { API_BASE_URL };
+export { authApi } from "@/lib/api/auth";
+export { inventoryApi } from "@/lib/api/inventory";
+export { profileApi } from "@/lib/api/profile";
+export { orderApi } from "@/lib/api/order";
+export { walletApi } from "@/lib/api/wallet";
+export { adminApi } from "@/lib/api/admin";
 
 export const apiFetch = async <T = unknown>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<{ response: Response; data: T | null }> => {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = getAccessToken();
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
