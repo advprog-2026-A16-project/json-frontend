@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test:functional:inventory": "playwright test tests/inventory.spec.ts",
-    "test:functional:inventory:headed": "playwright test tests/inventory.spec.ts --headed"
+    "test:functional:inventory:headed": "playwright test tests/inventory.spec.ts --headed",
+    "test:functional:wallet": "playwright test tests/wallet.spec.ts",
+    "test:functional:wallet:headed": "playwright test tests/wallet.spec.ts --headed"
   },
   "dependencies": {
     "next": "16.1.6",
