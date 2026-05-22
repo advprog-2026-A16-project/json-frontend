@@ -10,7 +10,9 @@
     "test:functional:inventory": "playwright test tests/inventory.spec.ts",
     "test:functional:inventory:headed": "playwright test tests/inventory.spec.ts --headed",
     "test:functional:wallet": "playwright test tests/wallet.spec.ts",
-    "test:functional:wallet:headed": "playwright test tests/wallet.spec.ts --headed"
+    "test:functional:wallet:headed": "playwright test tests/wallet.spec.ts --headed",
+    "test:functional:order": "playwright test tests/order.spec.ts",
+    "test:functional:order:headed": "playwright test tests/order.spec.ts --headed"
   },
   "dependencies": {
     "next": "16.1.6",
