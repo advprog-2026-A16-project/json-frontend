@@ -8,6 +8,7 @@ export { profileApi } from "@/lib/api/profile";
 export { orderApi } from "@/lib/api/order";
 export { walletApi } from "@/lib/api/wallet";
 export { adminApi } from "@/lib/api/admin";
+export { userApi } from "@/lib/api/user";
 
 export const apiFetch = async <T = unknown>(
   endpoint: string,

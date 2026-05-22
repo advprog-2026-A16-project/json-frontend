@@ -12,6 +12,11 @@ export type RegisterPayload = {
   confirmPassword: string;
 };
 
+export type ChangePasswordPayload = {
+  oldPassword: string;
+  newPassword: string;
+};
+
 export const authApi = {
   login: (payload: LoginPayload) =>
     apiRequest<AuthResponse>("/api/auth/login", {
@@ -27,5 +32,12 @@ export const authApi = {
       body: JSON.stringify(payload),
       withAuth: false,
       fallbackErrorMessage: "Registration failed. Please try again.",
+    }),
+
+  changePassword: (payload: ChangePasswordPayload) =>
+    apiRequest<void>("/api/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      fallbackErrorMessage: "Gagal mengubah kata sandi.",
     }),
 };

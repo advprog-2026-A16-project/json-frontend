@@ -5,8 +5,9 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Banner, StateCard } from "@/components/ui/feedback";
 import { ProductImage } from "@/components/ui/product-image";
-import { inventoryApi } from "@/lib/api";
+import { inventoryApi, userApi } from "@/lib/api";
 import type { Product } from "@/lib/api/inventory";
+import type { PublicProfileResponse } from "@/lib/api/user";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
 export default function ProductDetailPage() {
@@ -14,11 +15,13 @@ export default function ProductDetailPage() {
   const productId = params?.id;
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [jastiperProfile, setJastiperProfile] = useState<PublicProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [error, setError] = useState("");
   const [orderQty, setOrderQty] = useState("1");
 
-  const { isAuthenticated, hasRole } = useAuth();
+  const { isAuthenticated, hasRole, session } = useAuth();
   const canCreateOrder = isAuthenticated && hasRole("TITIPERS");
   const toIdr = (value: number) =>
     new Intl.NumberFormat("id-ID", {
@@ -36,6 +39,18 @@ export default function ProductDetailPage() {
     try {
       const data = await inventoryApi.detail(productId);
       setProduct(data);
+
+      if (data.jastiperId) {
+        setLoadingProfile(true);
+        try {
+          const profileData = await userApi.getPublicProfile(data.jastiperId);
+          setJastiperProfile(profileData);
+        } catch (err) {
+          setJastiperProfile(null);
+        } finally {
+          setLoadingProfile(false);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch product detail.");
       setProduct(null);
@@ -113,6 +128,37 @@ export default function ProductDetailPage() {
                     </div>
                   </div>
                 </div>
+
+                {product.jastiperId && (
+                  <Link
+                    href={session.userId === product.jastiperId ? "/profile/me" : `/users/${product.jastiperId}`}
+                    className="mt-6 block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300"
+                  >
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${jastiperProfile?.username || "user"}`}
+                        alt="Jastiper Avatar"
+                        className="h-12 w-12 rounded-full border-2 border-slate-100 bg-slate-50 object-cover"
+                      />
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Jastiper</p>
+                        <h3 className="text-base font-bold text-slate-900">
+                          {loadingProfile ? "Memuat..." : (jastiperProfile?.fullName || jastiperProfile?.username || "Pengguna")}
+                        </h3>
+                        {!loadingProfile && jastiperProfile && (
+                          <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+                            <span>@{jastiperProfile.username}</span>
+                            <span>•</span>
+                            <span>⭐ {jastiperProfile.rating > 0 ? jastiperProfile.rating.toFixed(1) : "-"}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-blue-600">
+                        <span className="text-sm font-semibold">Lihat &rarr;</span>
+                      </div>
+                    </div>
+                  </Link>
+                )}
 
                 {canCreateOrder ? (
                   <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">

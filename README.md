@@ -54,7 +54,7 @@ npm run build
 6. `/orders`
 7. `/orders/[id]`
 8. `/wallet`
-9. `/profile`
+9. `/profile/me`
 10. `/kyc`
 11. `/admin/products`
 12. `/admin/users`

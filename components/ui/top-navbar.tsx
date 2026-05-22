@@ -26,8 +26,8 @@ export function TopNavbar() {
     links.push({ href: "/admin/kyc", label: "Approve KYC" });
   } else if (isAuthenticated) {
     links.push({ href: "/orders", label: "Orders" });
+    links.push({ href: "/profile/me", label: "Profile" });
     links.push({ href: "/wallet", label: "Wallet" });
-    links.push({ href: "/profile", label: "Profile" });
     links.push({ href: "/kyc", label: "KYC" });
     if (hasRole("JASTIPER")) {
       links.push({ href: "/my/inventory", label: "My Inventory" });
