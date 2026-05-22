@@ -48,6 +48,12 @@ export type PaymentGatewayTopUpResponse = {
 };
 
 export const walletApi = {
+  getWallet: () =>
+    apiRequest<WalletResponse>("/api/wallet", {
+      method: "GET",
+      fallbackErrorMessage: "Failed to load wallet balance.",
+    }),
+
   topUp: (payload: WalletAmountPayload) =>
     apiRequest<WalletResponse>("/api/wallet/top-up", {
       method: "POST",

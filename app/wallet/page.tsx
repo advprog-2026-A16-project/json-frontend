@@ -60,9 +60,9 @@ const actionMeta: Record<
 };
 
 const actionOrder: WalletAction[] = [
-  "topUpPayment",
-  "topUpRequest",
   "topUp",
+  "topUpRequest",
+  "topUpPayment",
   "withdrawRequest",
   "withdraw",
   "payment",
@@ -140,7 +140,7 @@ const signedAmount = (transaction: TransactionResponse) => {
 function WalletContent() {
   const { session } = useAuth();
   const [selectedAction, setSelectedAction] =
-    useState<WalletAction>("topUpPayment");
+    useState<WalletAction>("topUp");
   const [amount, setAmount] = useState("");
   const [destinationAccount, setDestinationAccount] = useState("");
   const [loading, setLoading] = useState(false);
@@ -148,6 +148,7 @@ function WalletContent() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [paymentUrl, setPaymentUrl] = useState("");
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [transactions, setTransactions] = useState<TransactionResponse[]>([]);
 
   const [refundUserId, setRefundUserId] = useState("");
@@ -162,16 +163,19 @@ function WalletContent() {
   const activeIdentity = session.email ?? "Akun aktif";
   const selectedMeta = actionMeta[selectedAction];
 
-  const loadTransactions = useCallback(async () => {
+  const loadWalletData = useCallback(async () => {
     setLoadingTransactions(true);
     try {
+      const wallet = await walletApi.getWallet();
       const data = await walletApi.getTransactions();
+      setWalletBalance(asNumber(wallet.balance));
       setTransactions(Array.isArray(data) ? data : []);
+      setError("");
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Riwayat transaksi wallet gagal dimuat.",
+          : "Data wallet gagal dimuat.",
       );
       setTransactions([]);
     } finally {
@@ -180,13 +184,14 @@ function WalletContent() {
   }, []);
 
   useEffect(() => {
-    void loadTransactions();
-  }, [loadTransactions]);
+    void loadWalletData();
+  }, [loadWalletData]);
 
-  const balance = useMemo(
+  const computedBalance = useMemo(
     () => transactions.reduce((total, transaction) => total + signedAmount(transaction), 0),
     [transactions],
   );
+  const balance = walletBalance ?? computedBalance;
 
   const successfulTransactions = useMemo(
     () => transactions.filter((transaction) => transaction.status === "SUCCESS"),
@@ -307,10 +312,14 @@ function WalletContent() {
         setPaymentUrl(response.transaction.paymentRedirectUrl);
       }
 
+      if ("balance" in response) {
+        setWalletBalance(asNumber(response.balance));
+      }
+
       setMessage(describeSuccess(selectedAction, response));
       setAmount("");
       setDestinationAccount("");
-      await loadTransactions();
+      await loadWalletData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Transaksi dompet gagal diproses.");
     } finally {
@@ -342,7 +351,7 @@ function WalletContent() {
       setAdminMessage("Refund berhasil diproses.");
       setRefundUserId("");
       setRefundAmount("");
-      await loadTransactions();
+      await loadWalletData();
     } catch (err) {
       setAdminError(err instanceof Error ? err.message : "Refund gagal diproses.");
     } finally {
@@ -369,7 +378,7 @@ function WalletContent() {
       setAdminMessage(`Transaksi sekarang berstatus ${statusLabel(transaction.status)}.`);
       setVerifyTransactionId("");
       setVerificationDescription("");
-      await loadTransactions();
+      await loadWalletData();
     } catch (err) {
       setAdminError(err instanceof Error ? err.message : "Verifikasi gagal diproses.");
     } finally {
@@ -527,7 +536,7 @@ function WalletContent() {
             </div>
             <button
               type="button"
-              onClick={() => void loadTransactions()}
+              onClick={() => void loadWalletData()}
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               Refresh
