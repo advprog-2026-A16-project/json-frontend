@@ -10,7 +10,7 @@ function DashboardContent() {
   const quickActions = [
     { href: "/inventory", title: "Jelajahi Katalog", desc: "Cari produk dan lanjutkan ke checkout." },
     { href: "/orders", title: "Pesanan Saya", desc: "Lihat status order aktif dan riwayat pesanan." },
-    { href: "/profile", title: "Profil", desc: "Perbarui identitas akun dan data pribadi." },
+    { href: "/profile/me", title: "Profil", desc: "Perbarui identitas akun dan data pribadi." },
   ];
 
   if (hasRole("JASTIPER") || hasRole("ADMIN")) {
