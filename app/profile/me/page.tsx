@@ -23,6 +23,7 @@ function ProfileContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const loadProfile = async () => {
     setError("");
@@ -71,6 +72,7 @@ function ProfileContent() {
         bio: updated.bio ?? "",
       });
       setSuccess("Profil berhasil diperbarui.");
+      setIsEditOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memperbarui profil.");
     } finally {
@@ -102,48 +104,94 @@ function ProfileContent() {
         {error && <Banner tone="error" className="mb-3">{error}</Banner>}
         {success && <Banner tone="success" className="mb-3">{success}</Banner>}
 
-        <div className="mb-6 grid gap-4 md:grid-cols-[0.85fr_1.15fr]">
-          <div className="rounded-[28px] bg-[#2563eb] p-6 text-white shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-100">Identitas akun</p>
-            <h2 className="mt-3 text-2xl font-black">{profile?.fullName || form.fullName || "Lengkapi nama profil"}</h2>
-            <p className="mt-2 text-sm text-blue-100">{profile?.email ?? session.email ?? "-"}</p>
-            <p className="mt-6 text-sm leading-7 text-blue-100">
-              Gunakan halaman ini untuk memperbarui nama tampilan, username, dan bio singkat yang akan dipakai di aplikasi.
-            </p>
-          </div>
-
-          <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Ringkasan profil
-            </p>
-
-            <div className="mt-4 flex items-center gap-4">
+        <div className="grid gap-4 md:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-[28px] bg-[#2563eb] p-7 text-white shadow-sm">
+            <div className="flex items-center gap-5">
               <img
                 src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${
                   form.username || "user"
                 }`}
                 alt="Profile Avatar"
-                className="h-14 w-14 rounded-full border border-slate-200 bg-white object-cover"
+                className="h-24 w-24 rounded-full border-4 border-white/30 bg-white object-cover"
               />
 
               <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  {form.fullName || "Pengguna"}
-                </h3>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-100">
+                  Akun Saya
+                </p>
 
-                <p className="text-sm text-slate-500">
+                <h2 className="mt-2 text-3xl font-black leading-tight">
+                  {profile?.fullName || form.fullName || "Lengkapi nama profil"}
+                </h2>
+
+                <p className="mt-1 text-sm text-blue-100">
                   @{form.username || "username"}
+                </p>
+
+                <p className="mt-1 text-sm text-blue-100">
+                  {profile?.email ?? session.email ?? "-"}
                 </p>
               </div>
             </div>
 
+            <button
+              type="button"
+              onClick={() => setIsEditOpen(true)}
+              className="mt-8 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#2563eb] hover:bg-blue-50"
+            >
+              Edit Profil
+            </button>
+          </div>
+
+          <div className="rounded-[28px] border border-slate-200 bg-white p-7 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Ringkasan Profil
+            </p>
+
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="rounded-2xl bg-slate-50 p-5 border border-slate-100">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Rating
+                </p>
+
+                <h3 className="mt-2 text-3xl font-black text-[#2563eb]">
+                  {profile?.rating ? profile.rating.toFixed(1) : "-"}
+                </h3>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-5 border border-slate-100">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Transaksi
+                </p>
+
+                <h3 className="mt-2 text-3xl font-black text-slate-900">
+                  {profile?.successfulTransactions || 0}
+                </h3>
+              </div>
+            </div>
+
             <div className="mt-6 space-y-4 text-sm text-slate-600">
-              <p><span className="font-semibold text-slate-900">Email:</span> {profile?.email ?? session.email ?? "-"}</p>
-              <p><span className="font-semibold text-slate-900">Username:</span> {form.username || "-"}</p>
-              <p><span className="font-semibold text-slate-900">Nama lengkap:</span> {form.fullName || "-"}</p>
-              <p><span className="font-semibold text-slate-900">Bio:</span> {form.bio || "Belum ada bio."}</p>
+              <p>
+                <span className="font-semibold text-slate-900">Username:</span>{" "}
+                @{form.username || "-"}
+              </p>
+
+              <p>
+                <span className="font-semibold text-slate-900">Nama lengkap:</span>{" "}
+                {form.fullName || "-"}
+              </p>
             </div>
           </div>
+        </div>
+
+        <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-7 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+            Tentang Saya
+          </p>
+
+          <p className="mt-4 whitespace-pre-wrap leading-8 text-slate-700">
+            {form.bio || "Belum ada bio."}
+          </p>
         </div>
 
         {error && (
@@ -156,45 +204,93 @@ function ProfileContent() {
           </button>
         )}
 
-        <form onSubmit={handleSave} className="space-y-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-bold text-slate-900">Edit Profil</h2>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Username</label>
-            <input
-              value={form.username}
-              onChange={(event) => setForm((prev) => ({ ...prev, username: event.target.value }))}
-              className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nama Lengkap</label>
-            <input
-              value={form.fullName}
-              onChange={(event) => setForm((prev) => ({ ...prev, fullName: event.target.value }))}
-              className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Bio Singkat</label>
-            <textarea
-              value={form.bio}
-              onChange={(event) => setForm((prev) => ({ ...prev, bio: event.target.value }))}
-              className="h-32 w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-xl bg-[#2563eb] px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+        {isEditOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={() => setIsEditOpen(false)}
           >
-            {isSaving ? "Menyimpan..." : "Simpan Profil"}
-          </button>
-        </form>
+            <div
+              className="w-full max-w-xl rounded-[28px] bg-white p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-2xl font-black text-slate-900">
+                  Edit Profil
+                </h2>
+
+                <button
+                  type="button"
+                  onClick={() => setIsEditOpen(false)}
+                  className="text-sm font-semibold text-slate-500 hover:text-slate-700"
+                >
+                  Tutup
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Username
+                  </label>
+
+                  <input
+                    value={form.username}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        username: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Nama Lengkap
+                  </label>
+
+                  <input
+                    value={form.fullName}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        fullName: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Bio Singkat
+                  </label>
+
+                  <textarea
+                    value={form.bio}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        bio: event.target.value,
+                      }))
+                    }
+                    className="h-32 w-full rounded-xl border border-slate-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="w-full rounded-xl bg-[#2563eb] px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                >
+                  {isSaving ? "Menyimpan..." : "Simpan Profil"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
