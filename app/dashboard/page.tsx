@@ -11,6 +11,7 @@ function DashboardContent() {
     { href: "/inventory", title: "Jelajahi Katalog", desc: "Cari produk dan lanjutkan ke checkout." },
     { href: "/orders", title: "Pesanan Saya", desc: "Lihat status order aktif dan riwayat pesanan." },
     { href: "/profile/me", title: "Profil", desc: "Perbarui identitas akun dan data pribadi." },
+    { href: "/wallet", title: "Wallet", desc: "Top up, tarik dana, dan cek riwayat saldo." },
   ];
 
   if (hasRole("JASTIPER") || hasRole("ADMIN")) {
@@ -32,6 +33,11 @@ function DashboardContent() {
       href: "/admin/products",
       title: "Panel Produk",
       desc: "Moderasi data produk di seluruh sistem.",
+    });
+    quickActions.push({
+      href: "/wallet",
+      title: "Wallet Admin",
+      desc: "Refund dan verifikasi transaksi wallet.",
     });
     quickActions.push({
       href: "/admin/kyc",

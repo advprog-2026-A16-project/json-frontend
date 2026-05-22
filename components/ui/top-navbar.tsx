@@ -21,11 +21,13 @@ export function TopNavbar() {
 
   if (isAuthenticated && hasRole("ADMIN")) {
     links.push({ href: "/orders", label: "Orders Log" });
+    links.push({ href: "/wallet", label: "Wallet" });
     links.push({ href: "/admin/products", label: "Admin" });
     links.push({ href: "/admin/kyc", label: "Approve KYC" });
   } else if (isAuthenticated) {
     links.push({ href: "/orders", label: "Orders" });
     links.push({ href: "/profile/me", label: "Profile" });
+    links.push({ href: "/wallet", label: "Wallet" });
     links.push({ href: "/kyc", label: "KYC" });
     if (hasRole("JASTIPER")) {
       links.push({ href: "/my/inventory", label: "My Inventory" });
