@@ -49,7 +49,6 @@ function ProfileContent() {
   useEffect(() => {
     if (!session.token) return;
     void loadProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.token]);
 
   const handleSave = async (event: React.FormEvent) => {
@@ -78,6 +77,23 @@ function ProfileContent() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const renderRoleBadge = (role?: string) => {
+    if (!role) return null;
+    const config: Record<string, { label: string; className: string }> = {
+      ADMIN: { label: "Administrator", className: "bg-rose-500 text-white shadow-sm" },
+      JASTIPER: { label: "Verified Jastiper", className: "bg-emerald-400 text-emerald-950 shadow-sm" },
+      TITIPERS: { label: "Titipers", className: "bg-amber-400 text-amber-950 shadow-sm" },
+    };
+    const current = config[role] || { label: role, className: "bg-slate-100 text-slate-800 shadow-sm" };
+    
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${current.className}`}>
+        <span className="h-1.5 w-1.5 rounded-full bg-current opacity-75" />
+        {current.label}
+      </span>
+    );
   };
 
   if (isLoading) {
@@ -115,20 +131,20 @@ function ProfileContent() {
                 className="h-24 w-24 rounded-full border-4 border-white/30 bg-white object-cover"
               />
 
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-100">
-                  Akun Saya
-                </p>
+              <div className="space-y-2">
+                <div>
+                  {renderRoleBadge(profile?.role)}
+                </div>
 
-                <h2 className="mt-2 text-3xl font-black leading-tight">
+                <h2 className="text-3xl font-black leading-tight">
                   {profile?.fullName || form.fullName || "Lengkapi nama profil"}
                 </h2>
 
-                <p className="mt-1 text-sm text-blue-100">
+                <p className="text-sm text-blue-100">
                   @{form.username || "username"}
                 </p>
 
-                <p className="mt-1 text-sm text-blue-100">
+                <p className="text-sm text-blue-100">
                   {profile?.email ?? session.email ?? "-"}
                 </p>
               </div>
