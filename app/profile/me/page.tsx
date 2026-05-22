@@ -113,8 +113,31 @@ function ProfileContent() {
           </div>
 
           <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Ringkasan profil</p>
-            <div className="mt-4 space-y-4 text-sm text-slate-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Ringkasan profil
+            </p>
+
+            <div className="mt-4 flex items-center gap-4">
+              <img
+                src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${
+                  form.username || "user"
+                }`}
+                alt="Profile Avatar"
+                className="h-14 w-14 rounded-full border border-slate-200 bg-white object-cover"
+              />
+
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  {form.fullName || "Pengguna"}
+                </h3>
+
+                <p className="text-sm text-slate-500">
+                  @{form.username || "username"}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-4 text-sm text-slate-600">
               <p><span className="font-semibold text-slate-900">Email:</span> {profile?.email ?? session.email ?? "-"}</p>
               <p><span className="font-semibold text-slate-900">Username:</span> {form.username || "-"}</p>
               <p><span className="font-semibold text-slate-900">Nama lengkap:</span> {form.fullName || "-"}</p>
