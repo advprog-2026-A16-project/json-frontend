@@ -217,9 +217,15 @@ function MyInventoryContent() {
           </div>
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Status akun</p>
-            <p className="mt-3 text-lg font-bold text-slate-900">{session.email ?? "Jastiper aktif"}</p>
-            <p className="mt-2 text-sm text-slate-500">
-              {hasValidCurrentUserId ? "Katalog terhubung dan siap dikelola." : "Sesi belum lengkap. Login ulang diperlukan."}
+
+            <p className={`mt-3 text-lg font-bold ${hasValidCurrentUserId ? "text-slate-900" : "text-red-600"}`}>
+              {hasValidCurrentUserId ? "Jastiper Aktif" : "Sesi Tidak Valid"}
+            </p>
+
+            <p className="mt-2 text-sm text-slate-500 truncate">
+              {hasValidCurrentUserId 
+                ? (session.email ? `Terhubung: ${session.email}` : "Katalog terhubung dan siap dikelola.") 
+                : "Sesi belum lengkap. Login ulang diperlukan."}
             </p>
           </div>
         </section>

@@ -24,7 +24,7 @@ function ProfileContent() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const loadProfile = async (isRetry = false) => {
+  const loadProfile = async () => {
     setError("");
     setIsLoading(true);
     try {
@@ -37,18 +37,9 @@ function ProfileContent() {
         bio: me.bio ?? "",
       });
     } catch (err) {
-      const rawMessage = err instanceof Error ? err.message : "Failed to load profile.";
-      const message =
-        rawMessage === "Resource not found."
-          ? "Profil belum tersedia. Lengkapi form di bawah lalu simpan."
-          : rawMessage;
+      const message = err instanceof Error ? err.message : "Gagal memuat profil.";
       setError(message);
       setProfile(null);
-      if (!isRetry) {
-        setTimeout(() => {
-          void loadProfile(true);
-        }, 650);
-      }
     } finally {
       setIsLoading(false);
     }

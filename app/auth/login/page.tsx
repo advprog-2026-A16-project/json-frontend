@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { authApi, profileApi } from "@/lib/api";
+import { authApi } from "@/lib/api"; // profileApi dihapus karena sudah tidak perlu
 import { Banner } from "@/components/ui/feedback";
 import { patchSessionIdentity, setSessionFromAuthResponse } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -45,14 +45,13 @@ export default function LoginPage() {
 
       setSessionFromAuthResponse(payload);
 
-      let nextRole = payload.role ?? null;
-      try {
-        const me = await profileApi.me();
-        patchSessionIdentity({ role: me.role, userId: me.userId, email: me.email });
-        nextRole = me.role;
-      } catch {
-        // keep token-only session if profile endpoint fails
-      }
+      patchSessionIdentity({ 
+        role: payload.role, 
+        userId: payload.userId, 
+        email: payload.email 
+      });
+
+      const nextRole = payload.role ?? null;
 
       refresh();
       router.push(getPostLoginRoute(nextRole));
