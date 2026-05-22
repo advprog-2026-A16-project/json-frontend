@@ -128,7 +128,7 @@ export default function PublicProfilePage() {
 
           <div className="rounded-[28px] border border-slate-200 bg-white p-7 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Ringkasan Profil
+              Profil Pengguna
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-4">
@@ -173,12 +173,12 @@ export default function PublicProfilePage() {
 
         <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-7 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-            Tentang Pengguna
+            Bio
           </p>
 
           <p className="mt-4 whitespace-pre-wrap leading-8 text-slate-700">
             {profile.bio ||
-              "Pengguna ini belum menuliskan deskripsi profil."}
+              "Belum ada bio."}
           </p>
         </div>
       </div>
